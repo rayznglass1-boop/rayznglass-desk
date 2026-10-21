@@ -1,0 +1,40 @@
+services:
+  nickalas-core-bridge:
+    build:
+      context: .
+      dockerfile: Dockerfile.bridge
+    container_name: nickalas-core-bridge
+    env_file: docker.env
+    ports:
+      - "8080:8080"
+    depends_on:
+      - nickalas-core
+      - supabase-local
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  nickalas-core:
+    build:
+      context: .
+      dockerfile: Dockerfile.core
+    container_name: nickalas_core_v2
+    env_file: docker.env
+    restart: unless-stopped
+
+  supabase-local:
+    image: public.ecr.aws/supabase/postgres:15.8.1.060
+    container_name: nickalas-supabase-local
+    environment:
+      POSTGRES_PASSWORD: ${SUPABASE_DB_PASSWORD:-changeme}
+    ports:
+      - "54322:5432"
+    volumes:
+      - supabase-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  supabase-data:
